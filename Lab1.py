@@ -3,7 +3,7 @@
 # TDA596 - Lab 1
 # server/server.py
 # Input: Node_ID total_number_of_ID
-# Student: John Doe
+# Student: Erik Magnusson, Max Arfvidsson Nilsson
 # ------------------------------------------------------------------------------------------------------
 import traceback
 import sys
@@ -73,7 +73,7 @@ try:
     def index():
         global board, node_id
         return template('server/index.tpl', board_title='Vessel {}'.format(node_id),
-                board_dict=sorted({"0":board,}.iteritems()), members_name_string='YOUR NAME')
+                board_dict=sorted({"0":board,}.iteritems()), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
 
     @app.get('/board')
     def get_board():
@@ -94,14 +94,6 @@ try:
             element_id = max(board.keys()) + 1 # you need to generate a entry number
             add_new_element_to_store(element_id, new_entry)
 
-            # you should propagate something
-            # Please use threads to avoid blocking
-            # thread = Thread(target=???,args=???)
-            # For example: thread = Thread(target=propagate_to_vessels, args=....)
-            # you should create the thread as a deamon with thread.daemon = True
-            # then call thread.start() to spawn the thread
-
-            # Propagate action to all other nodes example :
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST'))
             thread.daemon = True
