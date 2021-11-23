@@ -39,8 +39,8 @@ try:
 
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
-                success, res = contact_vessel(vessel_ip, 'election/NEW')
-                if res == 'take_over':
+                success = contact_vessel(vessel_ip, 'election/NEW')
+                if success:
                     return False
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
@@ -52,7 +52,7 @@ try:
     def new_election_received():
         print("new election recieved")
         start_election()
-        return "take_over"
+        return True
 
     @app.post('/election/WINNER/<new_leader_id>')
     def new_leader(new_leader_id):
@@ -304,7 +304,7 @@ try:
                 success = True
         except Exception as e:
             print e
-        return success, res.text
+        return success
 
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         print("propagate_to_vessels")
@@ -312,7 +312,7 @@ try:
 
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) != my_id: # don't propagate to yourself
-                success, _ = contact_vessel(vessel_ip, path, payload, req)
+                success = contact_vessel(vessel_ip, path, payload, req)
                 if not success:
                     print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
     
@@ -320,8 +320,12 @@ try:
         print("send_request_to_leader")
         global my_id, leader_id
 
+        if leader_id < 0:
+            print("starting election....")
+            start_election()
+
         if int(leader_id) != my_id: # don't propagate to yourself
-            success, _ = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
+            success = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
             if not success:
                 print "\n\nCould not contact leader {}\n\n".format(vessel_id)
                 print("starting election....")
