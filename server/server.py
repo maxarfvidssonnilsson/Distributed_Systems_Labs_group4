@@ -315,7 +315,7 @@ try:
     # EXECUTION
     # ------------------------------------------------------------------------------------------------------
     def main():
-        global vessel_list, node_id, app
+        global vessel_list, my_id, app
 
         port = 80
         parser = argparse.ArgumentParser(description='Your own implementation of the distributed blackboard')
