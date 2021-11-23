@@ -23,18 +23,18 @@ try:
     is_leader = False; 
     leader_id = -1;
 
-
-   
     # Election methods: 
     def start_election():
         global my_id, is_leader, leader_id
         # Send message to all greater ids
         if send_election():
             propagate_to_vessels('election/WINNER/' + str(my_id))
+            print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             is_leader = True
             leader_id = my_id
 
     def send_election():
+        print ("sending election")
         global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
@@ -43,17 +43,21 @@ try:
                 if res == 'take_over':
                     return False
                 if not success:
-                    print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
+                    print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
+        print ("sent election")
         return True
+
 
     @app.post('/election/NEW')
     def new_election_received():
+        print("new election recieved")
         start_election()
         return "take_over"
 
     @app.post('/election/WINNER/<new_leader_id>')
     def new_leader(new_leader_id):
         global leader_id
+        print("new leader received " + str(new_leader_id))
         leader_id = new_leader_id
         
         
@@ -332,7 +336,7 @@ try:
             run(app, host=vessel_list[str(my_id)], port=port)
         except Exception as e:
             print e
-
+        print("starting first election....")
         start_election() #starts the first election. 
     # ------------------------------------------------------------------------------------------------------
     if __name__ == '__main__':
