@@ -20,17 +20,107 @@ try:
 
     #board stores all message on the system 
     board = {0 : "Welcome to Distributed Systems Course"} 
+    is_leader = False; 
+    leader_id = -1;
 
 
-    # ------------------------------------------------------------------------------------------------------
-    # BOARD FUNCTIONS
-    # You will probably need to modify them
-    # ------------------------------------------------------------------------------------------------------
-    
-    #This functions will add an new element
-    def add_new_element_to_store(entry_sequence, element, is_propagated_call=False):
-        global board, node_id
-        success = False
+   
+    # Election methods: 
+    def start_election():
+        global my_id, is_leader, leader_id
+        # Send message to all greater ids
+        if send_election():
+            propagate_to_vessels('election/WINNER/' + str(my_id))
+            is_leader = True
+            leader_id = my_id
+
+    def send_election():
+        global vessel_list, my_id
+
+        for vessel_id, vessel_ip in vessel_list.items():
+            if int(vessel_id) > my_id: # only send to greater ids
+                success, res = contact_vessel(vessel_ip, 'election/NEW')
+                if res == 'take_over':
+                    return False
+                if not success:
+                    print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
+        return True
+
+    @app.post('/election/NEW')
+    def new_election_received():
+        start_election()
+        return "take_over"
+
+    @app.post('/election/WINNER/<new_leader_id>')
+    def new_leader(new_leader_id):
+        global leader_id
+        leader_id = new_leader_id
+        
+        
+
+    #leader methods: 
+    def investigate_add(entry_sequence, element):
+        #investigate if request is valid. 
+
+        #if valid propegate to all nodes and call add_new_element_to_store on self
+        try:
+            #Propegate request to all other nodes
+            new_entry = request.forms.get('entry')
+            element_id = max(board.keys()) + 1 # you need to generate a entry number
+            add_new_element_to_store(element_id, new_entry)
+            
+            thread = Thread(target=propagate_to_vessels,
+                            args=('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST'))
+            thread.daemon = True
+            thread.start()
+            return True
+        except Exception as e:
+            print e
+        return False
+        
+
+    def investigate_modify(entry_sequence, modified_element):
+        #investigate if request is valid. 
+
+        #if valid propegate to all nodes and call modify_element_in_store on self
+
+        try:
+            #Propegate request to all other nodes
+            entry = request.forms.get('entry')
+            modify_element_in_store(entry_sequence, modified_element)
+            
+            thread = Thread(target=propagate_to_vessels,
+                            args=('/propagate/Delete/' + str(element_id), {'entry': entry}, 'POST'))
+            thread.daemon = True
+            thread.start()
+            return True
+        except Exception as e:
+            print e
+        return False
+
+    def investigate_delete(entry_sequence):
+        #investigate if request is valid. 
+        
+        #if valid propegate to all nodes and call delete_element_from_store on self
+        
+        try:
+            #Propegate request to all other nodes
+            entry = request.forms.get('entry')
+            delete_element_from_store(entry_sequence)
+            
+            thread = Thread(target=propagate_to_vessels,
+                            args=('/propagate/ADD/' + str(element_id), {'entry': entry}, 'POST'))
+            thread.daemon = True
+            thread.start()
+            return True
+        except Exception as e:
+            print e
+        return False
+
+
+    # Local modification methods:
+    def add_new_element_to_store(entry_sequence, element):
+        global board, my_id, is_leader
         element_id = int(entry_sequence)
         try:
            if entry_sequence not in board:
@@ -39,9 +129,10 @@ try:
         except Exception as e:
             print e
         return success
-
-    def modify_element_in_store(entry_sequence, modified_element, is_propagated_call = False):
-        global board, node_id
+            
+        
+    def modify_element_in_store(entry_sequence, modified_element):
+        global board, my_id
         success = False
         element_id = int(entry_sequence)
         try:
@@ -52,8 +143,8 @@ try:
             print e
         return success
 
-    def delete_element_from_store(entry_sequence, is_propagated_call = False):
-        global board, node_id
+    def delete_element_from_store(entry_sequence):
+        global board, my_id
         success = False
         element_id = int(entry_sequence)
         popped = board.pop(element_id, False)
@@ -71,15 +162,15 @@ try:
     #No need to modify this
     @app.route('/')
     def index():
-        global board, node_id
-        return template('server/index.tpl', board_title='Vessel {}'.format(node_id),
+        global board, my_id
+        return template('server/index.tpl', board_title='Vessel {}'.format(my_id),
                 board_dict=sorted({"0":board,}.iteritems()), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
 
     @app.get('/board')
     def get_board():
-        global board, node_id
+        global board, my_id
         print board
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(node_id), board_dict=sorted(board.iteritems()))
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=sorted(board.iteritems()))
     
     #------------------------------------------------------------------------------------------------------
     
@@ -88,49 +179,56 @@ try:
     def client_add_received():
         '''Adds a new element to the board
         Called directly when a user is doing a POST request on /board'''
-        global board, node_id
-        try:
-            new_entry = request.forms.get('entry')
-            element_id = max(board.keys()) + 1 # you need to generate a entry number
-            add_new_element_to_store(element_id, new_entry)
+        global board, my_id, is_leader, leader_id
 
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST'))
-            thread.daemon = True
-            thread.start()
-            return True
-        except Exception as e:
-            print e
-        return False
+        if (is_leader):
+            investigate_modify(entry_sequence, modified_element)
+        else:
+            try:
+                #send request to leader
+                new_entry = request.forms.get('entry')
+                element_id = max(board.keys()) + 1 # you need to generate a entry number
+                add_new_element_to_store(element_id, new_entry)
+                
+                thread = Thread(target=send_request_to_leader,
+                                args=('/request/ADD/' + {'entry': new_entry}, 'POST'))
+                thread.daemon = True
+                thread.start()
+                return True
+            except Exception as e:
+                print e
+            return False
 
     @app.post('/board/<element_id:int>/')
     def client_action_received(element_id):
-        global board, node_id
+        global board, my_id
         
         print "You receive an element"
-        print "id is ", node_id
+        print "id is ", my_id
         # Get the entry from the HTTP body
         entry = request.forms.get('entry')
         
         delete_option = request.forms.get('delete')
         #0 = modify, 1 = delete
         if delete_option == '1':
-            delete_element_from_store(element_id, False)
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/DELETE/' + str(element_id), {'entry': entry}, 'POST'))
-            thread.daemon = True
-            thread.start()
+            if is_leader:
+                investigate_delete(element_id)
+            else:
+                thread = Thread(target=send_request_to_leader,
+                                args=('/request/DELETE/' + str(element_id), {'entry': entry}, 'POST'))
+                thread.daemon = True
+                thread.start()
         else:
-            modify_element_in_store(element_id, entry, False)
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/MODIFY/' + str(element_id), {'entry': entry}, 'POST'))
-            thread.daemon = True
-            thread.start()
+            if is_leader:
+                investigate_modify(element_id, entry)
+            else: 
+                thread = Thread(target=send_request_to_leader
+                                args=('/request/MODIFY/' + str(element_id), {'entry': entry}, 'POST'))
+                thread.daemon = True
+                thread.start()
         
         print "the delete option is ", delete_option
         
-        
-
     #With this function you handle requests from other nodes like add modify or delete
     @app.post('/propagate/<action>/<element_id>')
     def propagation_received(action, element_id):
@@ -150,6 +248,27 @@ try:
         else:
             print("Action not valid")
 
+#This function handles requests to the leader
+    @app.post('/request/<action>')
+    def request_received(action, element_id):
+        global is_leader, leader_id
+        if not is_leader:
+            print("I'm not leader")
+        #get entry from http body
+        entry = request.forms.get('entry')
+        print "the action is", action
+        
+        if action == "ADD":
+            investigate_add(element_id, entry)
+        
+        elif action == "MODIFY":
+            investigate_modify(element_id, entry)
+            
+        elif action == "DELETE":
+            investigate_delete(element_id)
+            
+        else:
+            print("Action not valid")
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
@@ -170,16 +289,26 @@ try:
                 success = True
         except Exception as e:
             print e
-        return success
+        return success, res.text
 
     def propagate_to_vessels(path, payload = None, req = 'POST'):
-        global vessel_list, node_id
+        global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
-            if int(vessel_id) != node_id: # don't propagate to yourself
-                success = contact_vessel(vessel_ip, path, payload, req)
+            if int(vessel_id) != my_id: # don't propagate to yourself
+                success, _ = contact_vessel(vessel_ip, path, payload, req)
                 if not success:
                     print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
+    
+    def send_request_to_leader(path, payload = None, req = 'POST'):
+        global my_id, leader_id
+
+        if int(leader_id) != my_id: # don't propagate to yourself
+            success, _ = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
+            if not success:
+                print "\n\nCould not contact leader {}\n\n".format(vessel_id)
+                print("starting election....")
+                start_election()
 
         
     # ------------------------------------------------------------------------------------------------------
@@ -193,16 +322,18 @@ try:
         parser.add_argument('--id', nargs='?', dest='nid', default=1, type=int, help='This server ID')
         parser.add_argument('--vessels', nargs='?', dest='nbv', default=1, type=int, help='The total number of vessels present in the system')
         args = parser.parse_args()
-        node_id = args.nid
+        my_id = args.nid
         vessel_list = dict()
         # We need to write the other vessels IP, based on the knowledge of their number
         for i in range(1, args.nbv+1):
             vessel_list[str(i)] = '10.1.0.{}'.format(str(i))
 
         try:
-            run(app, host=vessel_list[str(node_id)], port=port)
+            run(app, host=vessel_list[str(my_id)], port=port)
         except Exception as e:
             print e
+
+        start_election() #starts the first election. 
     # ------------------------------------------------------------------------------------------------------
     if __name__ == '__main__':
         main()
