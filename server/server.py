@@ -182,9 +182,7 @@ try:
 
     @app.get('/board')
     def get_board():
-        print("get_board")
         global board, my_id
-        print board
         return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=sorted(board.iteritems()))
     
     #------------------------------------------------------------------------------------------------------
@@ -299,7 +297,7 @@ try:
             elif 'GET' in req:
                 res = requests.get('http://{}{}'.format(vessel_ip, path))
             else:
-                print 'Non implemented feature!'
+                print ('Non implemented feature!')
             # result is in res.text or res.json()
             print(res.text)
             if res.status_code == 200:
