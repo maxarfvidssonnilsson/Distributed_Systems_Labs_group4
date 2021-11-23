@@ -28,10 +28,17 @@ try:
         global my_id, is_leader, leader_id
         # Send message to all greater ids
         if send_election():
-            propagate_to_vessels('/election/WINNER/' + str(my_id))
-            print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            is_leader = True
-            leader_id = my_id
+            try:
+                #Propegate election result to all other nodes
+                thread = Thread(target=propagate_to_vessels,
+                                args=('/election/WINNER/' + str(my_id)))
+                thread.daemon = True
+                thread.start()
+                print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                is_leader = True
+                leader_id = my_id
+            except Exception as e:
+                print e
 
     def send_election():
         print ("sending election")
