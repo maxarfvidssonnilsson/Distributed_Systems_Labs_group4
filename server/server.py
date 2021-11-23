@@ -71,7 +71,10 @@ try:
         try:
             #Propegate request to all other nodes
             new_entry = request.forms.get('entry')
-            element_id = max(board.keys()) + 1 # you need to generate a entry number
+            if len(board) == 0:
+                    element_id = 0
+            else:
+                    element_id = max(board.keys()) + 1 # you need to generate a entry number
             add_new_element_to_store(element_id, new_entry)
             
             thread = Thread(target=propagate_to_vessels,
@@ -195,13 +198,15 @@ try:
         global board, my_id, is_leader, leader_id
 
         if (is_leader):
-            investigate_modify(entry_sequence, modified_element)
+            investigate_add(entry_sequence, modified_element)
         else:
             try:
                 #send request to leader
                 new_entry = request.forms.get('entry')
-                element_id = max(board.keys()) + 1 # you need to generate a entry number
-                add_new_element_to_store(element_id, new_entry)
+                if len(board) == 0:
+                    element_id = 0
+                else:
+                    element_id = max(board.keys()) + 1 # you need to generate a entry number
                 
                 thread = Thread(target=send_request_to_leader,
                                 args=('/request/ADD/' + {'entry': new_entry}, 'POST'))
