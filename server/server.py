@@ -28,7 +28,7 @@ try:
         global my_id, is_leader, leader_id
         # Send message to all greater ids
         if send_election():
-            propagate_to_vessels('election/WINNER/' + str(my_id))
+            propagate_to_vessels('/election/WINNER/' + str(my_id))
             print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             is_leader = True
             leader_id = my_id
@@ -39,7 +39,7 @@ try:
 
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
-                success = contact_vessel(vessel_ip, 'election/NEW')
+                success = contact_vessel(vessel_ip, '/election/NEW')
                 if success:
                     return False
                 if not success:
