@@ -203,13 +203,8 @@ try:
             try:
                 #send request to leader
                 new_entry = request.forms.get('entry')
-                if len(board) == 0:
-                    element_id = 0
-                else:
-                    element_id = max(board.keys()) + 1 # you need to generate a entry number
-                
                 thread = Thread(target=send_request_to_leader,
-                                args=('/request/ADD/' + {'entry': new_entry}, 'POST'))
+                                args=('/request/ADD/', {'entry': new_entry}, 'POST'))
                 thread.daemon = True
                 thread.start()
                 return True
