@@ -222,7 +222,7 @@ try:
             if is_leader:
                 investigate_modify(element_id, entry)
             else: 
-                thread = Thread(target=send_request_to_leader
+                thread = Thread(target=send_request_to_leader,
                                 args=('/request/MODIFY/' + str(element_id), {'entry': entry}, 'POST'))
                 thread.daemon = True
                 thread.start()
