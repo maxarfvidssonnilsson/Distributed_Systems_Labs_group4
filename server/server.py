@@ -19,7 +19,7 @@ try:
     app = Bottle()
 
     #board stores all message on the system 
-    board = {0 : "Welcome to Distributed Systems Course"} 
+    board = {} 
     is_leader = False; 
     leader_id = -1;
 
@@ -64,6 +64,7 @@ try:
 
     #leader methods: 
     def investigate_add(entry_sequence, element):
+        print("investigate_add")
         #investigate if request is valid. 
 
         #if valid propegate to all nodes and call add_new_element_to_store on self
@@ -84,6 +85,7 @@ try:
         
 
     def investigate_modify(entry_sequence, modified_element):
+        print("investigate_modify")
         #investigate if request is valid. 
 
         #if valid propegate to all nodes and call modify_element_in_store on self
@@ -103,6 +105,7 @@ try:
         return False
 
     def investigate_delete(entry_sequence):
+        print("investigate_delete")
         #investigate if request is valid. 
         
         #if valid propegate to all nodes and call delete_element_from_store on self
@@ -124,6 +127,7 @@ try:
 
     # Local modification methods:
     def add_new_element_to_store(entry_sequence, element):
+        print("add_new_element_to_store")
         global board, my_id, is_leader
         element_id = int(entry_sequence)
         try:
@@ -136,6 +140,7 @@ try:
             
         
     def modify_element_in_store(entry_sequence, modified_element):
+        print("modify_element_in_store")
         global board, my_id
         success = False
         element_id = int(entry_sequence)
@@ -148,6 +153,7 @@ try:
         return success
 
     def delete_element_from_store(entry_sequence):
+        print("delete_element_from_store")
         global board, my_id
         success = False
         element_id = int(entry_sequence)
@@ -166,12 +172,14 @@ try:
     #No need to modify this
     @app.route('/')
     def index():
+        print("index")
         global board, my_id
         return template('server/index.tpl', board_title='Vessel {}'.format(my_id),
                 board_dict=sorted({"0":board,}.iteritems()), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
 
     @app.get('/board')
     def get_board():
+        print("get_board")
         global board, my_id
         print board
         return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=sorted(board.iteritems()))
@@ -181,6 +189,7 @@ try:
     # You NEED to change the follow functions
     @app.post('/board')
     def client_add_received():
+        print("client_add_received")
         '''Adds a new element to the board
         Called directly when a user is doing a POST request on /board'''
         global board, my_id, is_leader, leader_id
@@ -205,6 +214,7 @@ try:
 
     @app.post('/board/<element_id:int>/')
     def client_action_received(element_id):
+        print("client_action_received")
         global board, my_id
         
         print "You receive an element"
@@ -236,6 +246,7 @@ try:
     #With this function you handle requests from other nodes like add modify or delete
     @app.post('/propagate/<action>/<element_id>')
     def propagation_received(action, element_id):
+        print("propagation_received")
         #get entry from http body
         entry = request.forms.get('entry')
         print "the action is", action
@@ -255,6 +266,7 @@ try:
 #This function handles requests to the leader
     @app.post('/request/<action>')
     def request_received(action, element_id):
+        print("request_received")
         global is_leader, leader_id
         if not is_leader:
             print("I'm not leader")
@@ -278,6 +290,7 @@ try:
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
     # ------------------------------------------------------------------------------------------------------
     def contact_vessel(vessel_ip, path, payload=None, req='POST'):
+        print("contact_vessel")
         # Try to contact another server (vessel) through a POST or GET, once
         success = False
         try:
@@ -296,6 +309,7 @@ try:
         return success, res.text
 
     def propagate_to_vessels(path, payload = None, req = 'POST'):
+        print("propagate_to_vessels")
         global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
@@ -305,6 +319,7 @@ try:
                     print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
     
     def send_request_to_leader(path, payload = None, req = 'POST'):
+        print("send_request_to_leader")
         global my_id, leader_id
 
         if int(leader_id) != my_id: # don't propagate to yourself
@@ -320,7 +335,7 @@ try:
     # ------------------------------------------------------------------------------------------------------
     def main():
         global vessel_list, my_id, app
-
+        print("start of main")
         port = 80
         parser = argparse.ArgumentParser(description='Your own implementation of the distributed blackboard')
         parser.add_argument('--id', nargs='?', dest='nid', default=1, type=int, help='This server ID')
@@ -331,13 +346,10 @@ try:
         # We need to write the other vessels IP, based on the knowledge of their number
         for i in range(1, args.nbv+1):
             vessel_list[str(i)] = '10.1.0.{}'.format(str(i))
-
         try:
             run(app, host=vessel_list[str(my_id)], port=port)
         except Exception as e:
             print e
-        print("starting first election....")
-        start_election() #starts the first election. 
     # ------------------------------------------------------------------------------------------------------
     if __name__ == '__main__':
         main()
