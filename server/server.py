@@ -27,7 +27,7 @@ try:
     def start_election():
         global my_id, is_leader, leader_id
         # Send message to all greater ids
-        if send_election():
+        if send_election():  # maybe put send_election in thread in the future
             try:
                 #Propegate election result to all other nodes
                 thread = Thread(target=propagate_to_vessels,
@@ -46,7 +46,7 @@ try:
 
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
-                success = contact_vessel(vessel_ip, '/election/NEW')
+                success = contact_vessel(vessel_ip, '/election/NEW/')
                 if success:
                     return False
                 if not success:
@@ -66,6 +66,9 @@ try:
         global leader_id
         print("new leader received " + str(new_leader_id))
         leader_id = new_leader_id
+        if is_leader:
+            print("I surrender my throne!")
+            is_leader = False
         
         
 
@@ -126,7 +129,7 @@ try:
             delete_element_from_store(entry_sequence)
             
             thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/ADD/' + str(element_id), {'entry': entry}, 'POST'))
+                            args=('/propagate/ADD/' + entry_sequence, {'entry': entry}, 'POST'))
             thread.daemon = True
             thread.start()
             return True
@@ -312,6 +315,20 @@ try:
         except Exception as e:
             print e
         return success
+
+    # def send_election():
+    #         print ("sending election")
+    #         global vessel_list, my_id
+
+    #         for vessel_id, vessel_ip in vessel_list.items():
+    #             if int(vessel_id) > my_id: # only send to greater ids
+    #                 success = contact_vessel(vessel_ip, '/election/NEW/')
+    #                 if success:
+    #                     return False
+    #                 if not success:
+    #                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
+    #         print ("sent election")
+    #         return True
 
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         print("propagate_to_vessels")
