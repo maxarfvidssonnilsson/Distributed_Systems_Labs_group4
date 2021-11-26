@@ -11,6 +11,7 @@ import time
 import json
 import argparse
 from threading import Thread
+from datetime import datetime
 
 from bottle import Bottle, run, request, template
 import requests
@@ -23,6 +24,12 @@ try:
     board = {} 
     is_leader = False; 
     leader_id = -1;
+
+    def get_time():
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        return current_time
+
 
     # Election methods: 
     def start_election():
@@ -38,23 +45,23 @@ try:
                                 args=args)
                 thread.daemon = True
                 thread.start()
-                print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! at " + get_time())
                 is_leader = True
                 leader_id = my_id
             except Exception as e:
                 print e
 
     def send_election():
-        print ("sending election")
+        print ("sending election at " + get_time())
         global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
-                print("sending new election too " + vessel_id)
+                print("sending new election too " + vessel_id + " at " get_time())
                 
                 success = contact_vessel(vessel_ip, '/election/NEW/')
                 if success:
-                    print("election failed")
+                    print("election failed at " + get_time())
                     return False
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
@@ -63,7 +70,7 @@ try:
 
     #leader methods: 
     def investigate_add(entry_sequence, element):
-        print("investigate_add")
+        print("investigate_add at " + get_time())
         #investigate if request is valid. 
 
         #if valid propegate to all nodes and call add_new_element_to_store on self
@@ -286,7 +293,8 @@ try:
 
     @app.post('/election/NEW/')
     def new_election_received():
-        print("new election recieved")
+        print("new election recieved at " + get_time())
+        print("Current Time =", current_time)
         # String referrer = request.getHeader("referer")
         # entry = request.forms.get('entry')
         # print(entry)
