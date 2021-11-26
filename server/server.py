@@ -31,8 +31,10 @@ try:
         if won_election:  # maybe put send_election in thread in the future
             try:
                 #Propegate election result to all other nodes
+                args = ('/election/WINNER/{}'.format(str(my_id)))
+                print(args)
                 thread = Thread(target=propagate_to_vessels,
-                                args=('/election/WINNER/{}'.format(str(my_id))))
+                                args=args)
                 thread.daemon = True
                 thread.start()
                 print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -292,7 +294,7 @@ try:
 
     @app.post('/election/WINNER/<new_leader_id>/')
     def new_leader(new_leader_id):
-        global leader_id
+        global leader_id, is_leader
         print("new leader received " + str(new_leader_id))
         leader_id = new_leader_id
         if is_leader:
@@ -336,7 +338,8 @@ try:
         global my_id, leader_id
 
         if leader_id < 0:
-            print("starting election....")
+            print("This is the beginning of the system.")
+            print("Starting election process...")
             start_election()
 
         if int(leader_id) != my_id: # don't propagate to yourself
