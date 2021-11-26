@@ -46,14 +46,7 @@ try:
         global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
-            print(type(vessel_ip))
-            print(vessel_ip)
-            print(type(vessel_id))
-            print(vessel_id)
-            print(type(my_id))
-            print(my_id)
             if int(vessel_id) > my_id: # only send to greater ids
-                print(str(vessel_id) + " is bigger than " + str(my_id))
                 success = contact_vessel(vessel_ip, '/election/NEW/')
                 if success:
                     print("election failed")
