@@ -32,7 +32,7 @@ try:
             try:
                 #Propegate election result to all other nodes
                 thread = Thread(target=propagate_to_vessels,
-                                args=('/election/WINNER/' + str(my_id)))
+                                args=('/election/WINNER/{}'.format(str(my_id))))
                 thread.daemon = True
                 thread.start()
                 print("I AM KING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -72,7 +72,7 @@ try:
             add_new_element_to_store(element_id, new_entry)
             
             thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST'))
+                            args=('/propagate/ADD/{}'.format(str(element_id)), {'entry': new_entry}, 'POST'))
             thread.daemon = True
             thread.start()
             return True
@@ -93,7 +93,7 @@ try:
             modify_element_in_store(entry_sequence, modified_element)
             
             thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/Delete/' + str(element_id), {'entry': entry}, 'POST'))
+                            args=('/propagate/Delete/{}'.format(str(entry_sequence)), {'entry': entry}, 'POST'))
             thread.daemon = True
             thread.start()
             return True
@@ -113,7 +113,7 @@ try:
             delete_element_from_store(entry_sequence)
             
             thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/ADD/' + entry_sequence, {'entry': entry}, 'POST'))
+                            args=('/propagate/ADD/{}'.format(str(entry_sequence)), {'entry': entry}, 'POST'))
             thread.daemon = True
             thread.start()
             return True
@@ -342,7 +342,7 @@ try:
         if int(leader_id) != my_id: # don't propagate to yourself
             success = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
             if not success:
-                print "\n\nCould not contact leader {}\n\n".format(vessel_id)
+                print "\n\nCould not contact leader {}\n\n".format(leader_id)
                 print("starting election....")
                 start_election()
 
