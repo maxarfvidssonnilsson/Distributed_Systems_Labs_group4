@@ -46,34 +46,22 @@ try:
         global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
+            print(type(vessel_ip))
             print(vessel_ip)
+            print(type(vessel_id))
+            print(vessel_id)
+            print(type(my_id))
+            print(my_id)
             if int(vessel_id) > my_id: # only send to greater ids
-                print(str(vessel_id) + "is bigger than" + str(my_id))
+                print(str(vessel_id) + " is bigger than " + str(my_id))
                 success = contact_vessel(vessel_ip, '/election/NEW/')
                 if success:
+                    print("election failed")
                     return False
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
         print ("election complete")
         return True
-
-
-    @app.post('/election/NEW')
-    def new_election_received():
-        print("new election recieved")
-        start_election()
-        return True
-
-    @app.post('/election/WINNER/<new_leader_id>')
-    def new_leader(new_leader_id):
-        global leader_id
-        print("new leader received " + str(new_leader_id))
-        leader_id = new_leader_id
-        if is_leader:
-            print("I surrender my throne!")
-            is_leader = False
-        
-        
 
     #leader methods: 
     def investigate_add(entry_sequence, element):
@@ -296,6 +284,27 @@ try:
             
         else:
             print("Action not valid")
+
+
+    @app.post('/election/NEW/')
+    def new_election_received():
+        print("new election recieved")
+        start_election()
+        return True
+
+    @app.get('/test')
+    def test():
+        print("Test")
+        return "Test"
+
+    @app.post('/election/WINNER/<new_leader_id>/')
+    def new_leader(new_leader_id):
+        global leader_id
+        print("new leader received " + str(new_leader_id))
+        leader_id = new_leader_id
+        if is_leader:
+            print("I surrender my throne!")
+            is_leader = False
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
