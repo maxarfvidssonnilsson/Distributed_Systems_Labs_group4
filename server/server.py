@@ -27,7 +27,8 @@ try:
     def start_election():
         global my_id, is_leader, leader_id
         # Send message to all greater ids
-        if send_election():  # maybe put send_election in thread in the future
+        won_election = send_election()
+        if won_election:  # maybe put send_election in thread in the future
             try:
                 #Propegate election result to all other nodes
                 thread = Thread(target=propagate_to_vessels,
@@ -45,13 +46,15 @@ try:
         global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
+            print(vessel_ip)
             if int(vessel_id) > my_id: # only send to greater ids
+                print(str(vessel_id) + "is bigger than" + str(my_id))
                 success = contact_vessel(vessel_ip, '/election/NEW/')
                 if success:
                     return False
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
-        print ("sent election")
+        print ("election complete")
         return True
 
 
@@ -315,20 +318,6 @@ try:
         except Exception as e:
             print e
         return success
-
-    # def send_election():
-    #         print ("sending election")
-    #         global vessel_list, my_id
-
-    #         for vessel_id, vessel_ip in vessel_list.items():
-    #             if int(vessel_id) > my_id: # only send to greater ids
-    #                 success = contact_vessel(vessel_ip, '/election/NEW/')
-    #                 if success:
-    #                     return False
-    #                 if not success:
-    #                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
-    #         print ("sent election")
-    #         return True
 
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         print("propagate_to_vessels")
