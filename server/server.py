@@ -50,6 +50,8 @@ try:
 
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
+                print("sending new election too " + vessel_id)
+                
                 success = contact_vessel(vessel_ip, '/election/NEW/')
                 if success:
                     print("election failed")
@@ -290,7 +292,8 @@ try:
         # print(entry)
         # request.forms.get
         # print(referrer)
-        print(request.headers.get("Referer"))
+        print(request.headers.get("referrer"))
+        print(request.headers.get("Referrer"))
         start_election()
         return True
 
