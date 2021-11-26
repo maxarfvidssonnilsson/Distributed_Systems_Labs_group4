@@ -290,7 +290,7 @@ try:
         # print(entry)
         # request.forms.get
         # print(referrer)
-        print(request.headers.get("referer"))
+        print(request.headers.get("Referer"))
         start_election()
         return True
 
