@@ -294,7 +294,6 @@ try:
     @app.post('/election/NEW/')
     def new_election_received():
         print("new election recieved at " + get_time())
-        print("Current Time =", current_time)
         # String referrer = request.getHeader("referer")
         # entry = request.forms.get('entry')
         # print(entry)
