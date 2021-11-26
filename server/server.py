@@ -57,7 +57,7 @@ try:
 
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
-                print("sending new election too " + vessel_id + " at " get_time())
+                print("sending new election too " + vessel_id + " at " + get_time())
                 
                 success = contact_vessel(vessel_ip, '/election/NEW/')
                 if success:
@@ -65,7 +65,7 @@ try:
                     return False
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
-        print ("election complete")
+        print ("election complete at " + get_time())
         return True
 
     #leader methods: 
