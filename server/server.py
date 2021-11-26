@@ -285,6 +285,12 @@ try:
     @app.post('/election/NEW/')
     def new_election_received():
         print("new election recieved")
+        # String referrer = request.getHeader("referer")
+        # entry = request.forms.get('entry')
+        # print(entry)
+        # request.forms.get
+        # print(referrer)
+        print(request.headers.get("referer"))
         start_election()
         return True
 
