@@ -59,7 +59,7 @@ try:
             if int(vessel_id) > my_id: # only send to greater ids
                 print("sending new election too " + vessel_id + " at " + get_time())
                 
-                success = contact_vessel(vessel_ip, '/election/NEW/')
+                success = contact_vessel(vessel_ip, '/election/NEW')
                 if success:
                     print("election failed at " + get_time())
                     return False
@@ -216,7 +216,7 @@ try:
                 print e
             return False
 
-    @app.post('/board/<element_id:int>/')
+    @app.post('/board/<element_id:int>')
     def client_action_received(element_id):
         print("client_action_received")
         global board, my_id
@@ -291,7 +291,7 @@ try:
             print("Action not valid")
 
 
-    @app.post('/election/NEW/')
+    @app.post('/election/NEW')
     def new_election_received():
         print("new election recieved at " + get_time())
         # String referrer = request.getHeader("referer")
@@ -309,7 +309,7 @@ try:
         print("Test")
         return "Test"
 
-    @app.post('/election/WINNER/<new_leader_id>/')
+    @app.post('/election/WINNER/<new_leader_id>')
     def new_leader(new_leader_id):
         global leader_id, is_leader
         print("new leader received " + str(new_leader_id))
