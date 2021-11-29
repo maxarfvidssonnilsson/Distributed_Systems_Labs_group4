@@ -294,14 +294,10 @@ try:
     @app.post('/election/NEW')
     def new_election_received():
         print("new election recieved at " + get_time())
-        # String referrer = request.getHeader("referer")
-        # entry = request.forms.get('entry')
-        # print(entry)
-        # request.forms.get
-        # print(referrer)
-        print(request.headers.get("referrer"))
-        print(request.headers.get("Referrer"))
-        start_election()
+        thread = Thread(target=start_election)
+        thread.daemon = True
+        thread.start()
+        # start_election()
         return True
 
     @app.get('/test')
@@ -333,7 +329,7 @@ try:
             else:
                 print ('Non implemented feature!')
             # result is in res.text or res.json()
-            print(res.text)
+            #print(res.text)
             if res.status_code == 200:
                 success = True
         except Exception as e:
@@ -343,7 +339,6 @@ try:
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         print("propagate_to_vessels")
         global vessel_list, my_id
-
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) != my_id: # don't propagate to yourself
                 success = contact_vessel(vessel_ip, path, payload, req)
