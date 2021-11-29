@@ -61,7 +61,7 @@ try:
         election_result = True
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
-                sent_index_list[vessel_id-1] = sent_index_list[vessel_id-1] + 1
+                sent_index_list[int(vessel_id)-1] = sent_index_list[int(vessel_id)-1] + 1
                 print("sending new election too " + vessel_id + " at " + get_time())
                 
                 success = contact_vessel(vessel_ip, '/election/NEW',  {'id': my_id})
