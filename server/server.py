@@ -190,6 +190,11 @@ try:
         thread.daemon = True
         thread.start()
 
+    def threaded_propagate_to_vessels(path, payload = None, req = 'POST'):
+        thread = Thread(target=propagate_to_vessels, args=(path, payload, req))
+        thread.daemon = True
+        thread.start()
+
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         global vessel_list, node_id
 
@@ -217,7 +222,7 @@ try:
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
         print("I'm the king!!!")
-        propagate_to_vessels('/election/WINNER/' + str(node_id))
+        threaded_propagate_to_vessels('/election/WINNER/' + str(node_id))
         return
 
         # Could put a flag so process waits for election to finish before starting a new one, ongoing_election
