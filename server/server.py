@@ -309,13 +309,17 @@ try:
     def new_leader(new_leader_id):
         global leader_id, is_leader, my_id
         print("new leader received " + str(new_leader_id))
-        leader_id = new_leader_id
+        
         if is_leader:
-            if my_id>new_leader_id:
+            if my_id>int(new_leader_id):
+                print("YOU DARE CHALLANGE ME???!!!!")
                 start_election()
             else:
                 print("I surrender my throne!")
+                leader_id = int(new_leader_id)
                 is_leader = False
+        else:
+            leader_id = int(new_leader_id)
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
