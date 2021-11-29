@@ -208,7 +208,7 @@ try:
                 #send request to leader
                 new_entry = request.forms.get('entry')
                 thread = Thread(target=send_request_to_leader,
-                                args=('/request/ADD/', {'entry': new_entry}, 'POST'))
+                                args=[('/request/ADD/', {'entry': new_entry}, 'POST')])
                 thread.daemon = True
                 thread.start()
                 return True
@@ -233,7 +233,7 @@ try:
                 investigate_delete(element_id)
             else:
                 thread = Thread(target=send_request_to_leader,
-                                args=('/request/DELETE/' + str(element_id), {'entry': entry}, 'POST'))
+                                args=[('/request/DELETE/' + str(element_id), {'entry': entry}, 'POST')])
                 thread.daemon = True
                 thread.start()
         else:
@@ -241,7 +241,7 @@ try:
                 investigate_modify(element_id, entry)
             else: 
                 thread = Thread(target=send_request_to_leader,
-                                args=('/request/MODIFY/' + str(element_id), {'entry': entry}, 'POST'))
+                                args=[('/request/MODIFY/' + str(element_id), {'entry': entry}, 'POST')])
                 thread.daemon = True
                 thread.start()
         
@@ -360,8 +360,7 @@ try:
             print("This is the beginning of the system.")
             print("Starting election process...")
             start_election()
-
-        if int(leader_id) != my_id: # don't propagate to yourself
+        elif int(leader_id) != my_id: # don't propagate to yourself
             success = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
             if not success:
                 print "\n\nCould not contact leader {}\n\n".format(leader_id)
