@@ -16,6 +16,10 @@ from datetime import datetime
 from bottle import Bottle, run, request, template
 import requests
 
+
+sent_index_list = [0,0,0,0,0,0]
+recieved_index_list = [0,0,0,0,0,0]
+
 # ------------------------------------------------------------------------------------------------------
 try:
     app = Bottle()
@@ -53,10 +57,11 @@ try:
 
     def send_election():
         print ("sending election at " + get_time())
-        global vessel_list, my_id
+        global vessel_list, my_id, sent_index_list, recieved_index_list
         election_result = True
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
+                sent_index_list[vessel_id-1] = sent_index_list[vessel_id-1] + 1
                 print("sending new election too " + vessel_id + " at " + get_time())
                 
                 success = contact_vessel(vessel_ip, '/election/NEW',  {'id': my_id})
@@ -293,8 +298,10 @@ try:
 
     @app.post('/election/NEW')
     def new_election_received():
+        global recieved_index_list
         from_id = request.forms.get('id')
         print("new election recieved at " + get_time() +  " from " + from_id)
+        recieved_index_list[int(from_id)-1] = recieved_index_list[int(from_id)-1] + 1
         thread = Thread(target=start_election)
         thread.daemon = True
         thread.start()
@@ -307,7 +314,7 @@ try:
 
     @app.post('/election/WINNER/<new_leader_id>')
     def new_leader(new_leader_id):
-        global leader_id, is_leader, my_id
+        global leader_id, is_leader, my_id, recieved_index_list, sent_index_list
         print("new leader received " + str(new_leader_id))
         
         if is_leader:
@@ -320,6 +327,9 @@ try:
                 is_leader = False
         else:
             leader_id = int(new_leader_id)
+
+        print(recieved_index_list)
+        print(sent_index_list)
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
