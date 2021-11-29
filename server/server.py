@@ -209,6 +209,7 @@ try:
                 success = contact_vessel(vessel_ip, '/election/NEW',  {'id': node_id})
                 if success:
                     print("Lost election to: " + vessel_id)
+                    return
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
         return
