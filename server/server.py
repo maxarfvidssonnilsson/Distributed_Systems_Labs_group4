@@ -54,7 +54,7 @@ try:
     def send_election():
         print ("sending election at " + get_time())
         global vessel_list, my_id
-
+        election_result = True
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > my_id: # only send to greater ids
                 print("sending new election too " + vessel_id + " at " + get_time())
@@ -62,11 +62,11 @@ try:
                 success = contact_vessel(vessel_ip, '/election/NEW',  {'id': my_id})
                 if success:
                     print("election failed at " + get_time() + "at id " + vessel_id)
-                    return False
+                    election_result = False
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
         print ("election complete at " + get_time())
-        return True
+        return election_result
 
     #leader methods: 
     def investigate_add(entry_sequence, element):
@@ -208,7 +208,7 @@ try:
                 #send request to leader
                 new_entry = request.forms.get('entry')
                 thread = Thread(target=send_request_to_leader,
-                                args=[('/request/ADD/', {'entry': new_entry}, 'POST')])
+                                args=('/request/ADD/', {'entry': new_entry}, 'POST'))
                 thread.daemon = True
                 thread.start()
                 return True
@@ -325,7 +325,6 @@ try:
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
     # ------------------------------------------------------------------------------------------------------
     def contact_vessel(vessel_ip, path, payload=None, req='POST'):
-        print("contact_vessel")
         # Try to contact another server (vessel) through a POST or GET, once
         success = False
         try:
@@ -346,6 +345,7 @@ try:
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         print("propagate_to_vessels")
         global vessel_list, my_id
+        print("number of nodes are: " + str(vessel_list.len))
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) != my_id: # don't propagate to yourself
                 success = contact_vessel(vessel_ip, path, payload, req)
@@ -366,6 +366,8 @@ try:
                 print "\n\nCould not contact leader {}\n\n".format(leader_id)
                 print("starting election....")
                 start_election()
+                
+                #send_request_to_leader(path, payload, req)
 
         
     # ------------------------------------------------------------------------------------------------------
