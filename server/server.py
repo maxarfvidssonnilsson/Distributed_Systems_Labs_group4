@@ -335,7 +335,7 @@ try:
             else:
                 print ('Non implemented feature!')
             # result is in res.text or res.json()
-            #print(res.text)
+            print(res.text)
             if res.status_code == 200:
                 success = True
         except Exception as e:
