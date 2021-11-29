@@ -328,8 +328,8 @@ try:
         else:
             leader_id = int(new_leader_id)
 
-        print(recieved_index_list)
-        print(sent_index_list)
+        print(*recieved_index_list)
+        print(*sent_index_list)
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
