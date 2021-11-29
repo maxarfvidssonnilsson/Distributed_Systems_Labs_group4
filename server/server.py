@@ -88,16 +88,15 @@ try:
     def client_add_received():
         '''Adds a new element to the board
         Called directly when a user is doing a POST request on /board'''
-        global board, node_id
+        global board, node_id, leader_ip
         try:
             new_entry = request.forms.get('entry')
-            element_id = max(board.keys()) + 1 # you need to generate a entry number
-            add_new_element_to_store(element_id, new_entry)
-
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST'))
-            thread.daemon = True
-            thread.start()
+            if is_leader:   
+                element_id = max(board.keys()) + 1 # you need to generate a entry number
+                add_new_element_to_store(element_id, new_entry)
+                threaded_propagate_to_vessels('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST')
+            else:
+                threaded_contact_vessel(leader_ip, '/request/ADD', {'entry': new_entry})
             return True
         except Exception as e:
             print e
@@ -160,8 +159,16 @@ try:
         return "Bully"
 
     @app.post('/election/WINNER/<new_leader_id>')
-    def new_leader(new_leader_id):
+    def new_leader_received(new_leader_id):
+        global leader_id, leader_ip, is_leader
         print("Recieved new leader " + new_leader_id)
+        leader_id = int(new_leader_id)
+        leader_ip = '10.1.0.{}'.format(str(leader_id))
+        is_leader = False
+
+    @app.post('/request/ADD')
+    def new_add_request_received():
+        print("Will do stuff here")
 
 
     # ------------------------------------------------------------------------------------------------------
@@ -212,6 +219,7 @@ try:
     def start_election():
         global node_id, vessel_list
         # Send message to largest id, break if any return
+        # Could put a flag so process waits for election to finish before starting a new one, ongoing_election
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > node_id:
                 print("Sending election to: " + vessel_id)
@@ -224,8 +232,6 @@ try:
         print("I'm the king!!!")
         threaded_propagate_to_vessels('/election/WINNER/' + str(node_id))
         return
-
-        # Could put a flag so process waits for election to finish before starting a new one, ongoing_election
 
         # F
 
