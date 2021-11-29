@@ -115,11 +115,12 @@ try:
         delete_option = request.forms.get('delete')
         #0 = modify, 1 = delete
         if delete_option == '1':
-            delete_element_from_store(element_id, False)
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/DELETE/' + str(element_id), {'entry': entry}, 'POST'))
-            thread.daemon = True
-            thread.start()
+            start_election()
+            # delete_element_from_store(element_id, False)
+            # thread = Thread(target=propagate_to_vessels,
+            #                 args=('/propagate/DELETE/' + str(element_id), {'entry': entry}, 'POST'))
+            # thread.daemon = True
+            # thread.start()
         else:
             modify_element_in_store(element_id, entry, False)
             thread = Thread(target=propagate_to_vessels,
@@ -150,6 +151,14 @@ try:
         else:
             print("Action not valid")
 
+    
+    @app.post('/election/NEW')
+    def new_election_received():
+        from_id = request.forms.get('id')
+        print("new election recieved from " + from_id)
+        # start_election()
+        return True
+
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
@@ -172,6 +181,11 @@ try:
             print e
         return success
 
+    def threaded_contact_vessel(vessel_ip, path, payload=None, req='POST'):
+        thread = Thread(target=contact_vessel, args=(vessel_ip, path, payload, req))
+        thread.daemon = True
+        thread.start()
+
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         global vessel_list, node_id
 
@@ -180,6 +194,28 @@ try:
                 success = contact_vessel(vessel_ip, path, payload, req)
                 if not success:
                     print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
+
+    
+
+    # ------------------------------------------------------------------------------------------------------
+    # LEADER FUNCTIONS
+    # ------------------------------------------------------------------------------------------------------
+    def start_election():
+        global node_id, vessel_list
+        # Send message to largest id, break if any return
+        for vessel_id, vessel_ip in vessel_list.items():
+            if int(vessel_id) > node_id:
+                print("Sending election to: " + vessel_id)
+                success = threaded_contact_vessel(vessel_ip, '/election/NEW',  {'id': node_id})
+                if success:
+                    print("Lost election to: " + vessel_id)
+                if not success:
+                    print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
+        return
+
+        # Could put a flag so process waits for election to finish before starting a new one, ongoing_election
+
+        # F
 
         
     # ------------------------------------------------------------------------------------------------------
