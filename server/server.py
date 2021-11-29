@@ -157,7 +157,7 @@ try:
         from_id = request.forms.get('id')
         print("new election recieved from " + from_id)
         # start_election()
-        return True
+        return "Success"
 
 
     # ------------------------------------------------------------------------------------------------------
