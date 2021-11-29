@@ -206,7 +206,7 @@ try:
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) > node_id:
                 print("Sending election to: " + vessel_id)
-                success = threaded_contact_vessel(vessel_ip, '/election/NEW',  {'id': node_id})
+                success = contact_vessel(vessel_ip, '/election/NEW',  {'id': node_id})
                 if success:
                     print("Lost election to: " + vessel_id)
                 if not success:
