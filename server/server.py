@@ -39,7 +39,7 @@ try:
         if won_election:  # maybe put send_election in thread in the future
             try:
                 #Propegate election result to all other nodes
-                args = ('/election/WINNER/{}'.format(str(my_id)))
+                args = ['/election/WINNER/{}'.format(str(my_id))]
                 print(args)
                 thread = Thread(target=propagate_to_vessels,
                                 args=args)
