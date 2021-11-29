@@ -159,6 +159,10 @@ try:
         start_election()
         return "Bully"
 
+    @app.post('/election/WINNER/<new_leader_id>')
+    def new_leader(new_leader_id):
+        print("Recieved new leader " + new_leader_id)
+
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
@@ -212,6 +216,8 @@ try:
                     return
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
+        print("I'm the king!!!")
+        propagate_to_vessels('/election/WINNER/' + node_id)
         return
 
         # Could put a flag so process waits for election to finish before starting a new one, ongoing_election
