@@ -59,9 +59,9 @@ try:
             if int(vessel_id) > my_id: # only send to greater ids
                 print("sending new election too " + vessel_id + " at " + get_time())
                 
-                success = contact_vessel(vessel_ip, '/election/NEW')
+                success = contact_vessel(vessel_ip, '/election/NEW',  {'id': my_id})
                 if success:
-                    print("election failed at " + get_time())
+                    print("election failed at " + get_time() + "at id " + vessel_id)
                     return False
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
@@ -293,11 +293,11 @@ try:
 
     @app.post('/election/NEW')
     def new_election_received():
-        print("new election recieved at " + get_time())
+        from_id = request.forms.get('id')
+        print("new election recieved at " + get_time() +  " from " + from_id)
         thread = Thread(target=start_election)
         thread.daemon = True
         thread.start()
-        # start_election()
         return True
 
     @app.get('/test')
@@ -307,10 +307,13 @@ try:
 
     @app.post('/election/WINNER/<new_leader_id>')
     def new_leader(new_leader_id):
-        global leader_id, is_leader
+        global leader_id, is_leader, my_id
         print("new leader received " + str(new_leader_id))
         leader_id = new_leader_id
         if is_leader:
+            if my_id>new_leader_id:
+                start_election()
+            else:
             print("I surrender my throne!")
             is_leader = False
 
