@@ -314,8 +314,8 @@ try:
             if my_id>new_leader_id:
                 start_election()
             else:
-            print("I surrender my throne!")
-            is_leader = False
+                print("I surrender my throne!")
+                is_leader = False
 
     # ------------------------------------------------------------------------------------------------------
     # DISTRIBUTED COMMUNICATIONS FUNCTIONS
