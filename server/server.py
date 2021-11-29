@@ -345,7 +345,7 @@ try:
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         print("propagate_to_vessels")
         global vessel_list, my_id
-        print("number of nodes are: " + str(vessel_list.len))
+        print("number of nodes are: " + str(len(vessel_list)))
         for vessel_id, vessel_ip in vessel_list.items():
             if int(vessel_id) != my_id: # don't propagate to yourself
                 success = contact_vessel(vessel_ip, path, payload, req)
