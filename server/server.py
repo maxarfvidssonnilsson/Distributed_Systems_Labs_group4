@@ -65,7 +65,6 @@ try:
         global board
         
         #investigate if request is valid. 
-        print('Element id ' + element_id)
         if int(element_id) not in board:
             print("this element doesn't exist")
             return False
@@ -150,7 +149,6 @@ try:
     @app.get('/board')
     def get_board():
         global board, my_id
-        print board
         return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=sorted(board.iteritems()))
     
     #------------------------------------------------------------------------------------------------------
@@ -175,9 +173,6 @@ try:
     @app.post('/board/<element_id:int>/')
     def client_action_received(element_id):
         global board, my_id
-        
-        print "You receive an element"
-        print "id is ", my_id
         # Get the entry from the HTTP body
         entry = request.forms.get('entry')
         
@@ -203,7 +198,6 @@ try:
     def propagation_received(action, element_id):
         #get entry from http body
         entry = request.forms.get('entry')
-        print "the action is", action
         
         if action == "ADD":
             add_new_element_to_store(element_id, entry, True)
