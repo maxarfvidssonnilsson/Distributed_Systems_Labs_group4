@@ -17,7 +17,8 @@ import requests
 # ------------------------------------------------------------------------------------------------------
 try:
     app = Bottle()
-
+    is_leader = False
+    leader_id = -1
     #board stores all message on the system 
     board = {0 : "Welcome to Distributed Systems Course"} 
 
@@ -78,13 +79,13 @@ try:
         if leader_id < 0:
             print("This is the beginning of the system.")
             print("Starting election process...")
-            #start_election()
+            start_election()
         elif int(leader_id) != my_id: # don't propagate to yourself
             success = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
             if not success:
                 print "\n\nCould not contact leader {}\n\n".format(leader_id)
                 print("starting election....")
-                #start_election()
+                start_election()
 
     # ------------------------------------------------------------------------------------------------------
     # BOARD FUNCTIONS
@@ -152,7 +153,7 @@ try:
     def client_add_received():
         '''Adds a new element to the board
         Called directly when a user is doing a POST request on /board'''
-        global board, node_id, leader_ip
+        global board, node_id, leader_ip, is_leader
         try:
             new_entry = request.forms.get('entry')
             if is_leader:   
