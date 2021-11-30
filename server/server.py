@@ -47,7 +47,7 @@ try:
         global board
 
         #investigate if request is valid. 
-        if not element_id in board:
+        if int(element_id) not in board:
             print("this element doesn't exist")
             return False
         
@@ -65,7 +65,8 @@ try:
         global board
         
         #investigate if request is valid. 
-        if not element_id in board:
+        print('Element id ' + element_id)
+        if int(element_id) not in board:
             print("this element doesn't exist")
             return False
 
@@ -237,6 +238,11 @@ try:
 
     @app.post('/request/ADD')
     def new_add_request_received():
+        global is_leader
+        if not is_leader:
+            print("I'm not leader")
+            start_election()
+            return
         print("Adding entry")
         entry = request.forms.get('entry')
         investigate_add(entry)
@@ -247,6 +253,8 @@ try:
         global is_leader
         if not is_leader:
             print("I'm not leader")
+            start_election()
+            return
         #get entry from http body
         entry = request.forms.get('entry')
         print("the action is", action)
