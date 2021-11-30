@@ -47,7 +47,7 @@ try:
         global board
 
         #investigate if request is valid. 
-        if not board.keys.contains(element_id):
+        if not element_id in board:
             print("this element doesn't exist")
             return False
         
@@ -65,10 +65,10 @@ try:
         global board
         
         #investigate if request is valid. 
-        if not board.keys.contains(element_id):
+        if not element_id in board:
             print("this element doesn't exist")
             return False
-            
+
         #if valid propegate to all nodes and call delete_element_from_store on self
         try:
             #Propegate request to all other nodes
