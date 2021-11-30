@@ -307,7 +307,7 @@ try:
     # LEADER FUNCTIONS
     # ------------------------------------------------------------------------------------------------------
     def start_election():
-        global my_id, vessel_list
+        global my_id, vessel_list, is_leader
         # Send message to largest id, break if any return
         # Could put a flag so process waits for election to finish before starting a new one, ongoing_election
         for vessel_id, vessel_ip in vessel_list.items():
@@ -320,10 +320,9 @@ try:
                 if not success:
                     print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
         print("I'm the king!!!")
+        is_leader = True
         threaded_propagate_to_vessels('/election/WINNER/' + str(my_id))
-        return
-
-        # F
+        return True
 
         
     # ------------------------------------------------------------------------------------------------------
