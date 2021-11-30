@@ -22,6 +22,70 @@ try:
     board = {0 : "Welcome to Distributed Systems Course"} 
 
 
+
+ #leader methods: 
+    def investigate_add(entry):
+        global board
+        #if valid propegate to all nodes and call add_new_element_to_store on self
+        #TODO add checks if it is valid request
+        try:
+            #Propegate request to all other nodes
+            if len(board) == 0:
+                    element_id = 0
+            else:
+                    element_id = max(board.keys()) + 1 # you need to generate a entry number
+            add_new_element_to_store(element_id, entry)
+            threaded_propagate_to_vessels('/propagate/ADD/{}'.format(str(element_id)), {'entry': entry})
+            return True
+        except Exception as e:
+            print e
+        return False
+        
+
+    def investigate_modify(element_id, new_state):
+        print("investigate_modify")
+        #investigate if request is valid. 
+
+        #if valid propegate to all nodes and call modify_element_in_store on self
+        #TODO add checks if it is valid request
+        try:
+            #Propegate request to all other nodes
+            modify_element_in_store(element_id, new_state)
+            threaded_propagate_to_vessels('/propagate/MODIFY/{}'.format(str(element_id)), {'entry': new_state})
+            return True
+        except Exception as e:
+            print e
+        return False
+
+    def investigate_delete(element_id):
+        print("investigate_delete")
+        #investigate if request is valid. 
+        
+        #if valid propegate to all nodes and call delete_element_from_store on self
+        #TODO add checks if it is valid request
+        try:
+            #Propegate request to all other nodes
+            delete_element_from_store(element_id)
+            threaded_propagate_to_vessels(['/propagate/DELETE/{}'.format(str(element_id))])
+            return True
+        except Exception as e:
+            print e
+        return False
+
+    def send_request_to_leader(path, payload = None, req = 'POST'):
+        global my_id, leader_id
+
+        if leader_id < 0:
+            print("This is the beginning of the system.")
+            print("Starting election process...")
+            #start_election()
+        elif int(leader_id) != my_id: # don't propagate to yourself
+            success = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
+            if not success:
+                print "\n\nCould not contact leader {}\n\n".format(leader_id)
+                print("starting election....")
+                #start_election()
+
     # ------------------------------------------------------------------------------------------------------
     # BOARD FUNCTIONS
     # You will probably need to modify them
@@ -92,11 +156,13 @@ try:
         try:
             new_entry = request.forms.get('entry')
             if is_leader:   
-                element_id = max(board.keys()) + 1 # you need to generate a entry number
-                add_new_element_to_store(element_id, new_entry)
-                threaded_propagate_to_vessels('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST')
+                investigate_add(new_entry)
+                #element_id = max(board.keys()) + 1 # you need to generate a entry number
+                #add_new_element_to_store(element_id, new_entry)
+                #threaded_propagate_to_vessels('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST')
             else:
-                threaded_contact_vessel(leader_ip, '/request/ADD', {'entry': new_entry})
+                send_request_to_leader('/request/ADD', {'entry': new_entry})
+                # threaded_contact_vessel(leader_ip, '/request/ADD', {'entry': new_entry})
             return True
         except Exception as e:
             print e
@@ -168,7 +234,31 @@ try:
 
     @app.post('/request/ADD')
     def new_add_request_received():
-        print("Will do stuff here")
+        print("Adding entry")
+        entry = request.forms.get('entry')
+        investigate_add(entry)
+
+    #This function handles requests to the leader
+    @app.post('/request/<action>/<element_id>')
+    def request_received(action, element_id):
+        global is_leader
+        if not is_leader:
+            print("I'm not leader")
+        #get entry from http body
+        entry = request.forms.get('entry')
+        print("the action is", action)
+        
+        # if action == "ADD":
+        #     investigate_add(entry)
+        
+        if action == "MODIFY":
+            investigate_modify(element_id, entry)
+            
+        elif action == "DELETE":
+            investigate_delete(element_id)
+            
+        else:
+            print("Action not valid")
 
 
     # ------------------------------------------------------------------------------------------------------
