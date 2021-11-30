@@ -74,13 +74,13 @@ try:
         return False
 
     def send_request_to_leader(path, payload = None, req = 'POST'):
-        global my_id, leader_id
+        global my_id, leader_id, node_id
 
         if leader_id < 0:
             print("This is the beginning of the system.")
             print("Starting election process...")
             start_election()
-        elif int(leader_id) != my_id: # don't propagate to yourself
+        elif int(leader_id) != node_id: # don't propagate to yourself
             success = contact_vessel('10.1.0.{}'.format(str(leader_id)), path, payload, req)
             if not success:
                 print "\n\nCould not contact leader {}\n\n".format(leader_id)
