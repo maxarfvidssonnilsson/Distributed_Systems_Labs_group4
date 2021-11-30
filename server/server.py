@@ -44,11 +44,14 @@ try:
         
 
     def investigate_modify(element_id, new_state):
-        print("investigate_modify")
-        #investigate if request is valid. 
+        global board
 
+        #investigate if request is valid. 
+        if not board.keys.contains(element_id):
+            print("this element doesn't exist")
+            return False
+        
         #if valid propegate to all nodes and call modify_element_in_store on self
-        #TODO add checks if it is valid request
         try:
             #Propegate request to all other nodes
             modify_element_in_store(element_id, new_state)
@@ -59,15 +62,18 @@ try:
         return False
 
     def investigate_delete(element_id):
-        print("investigate_delete")
-        #investigate if request is valid. 
+        global board
         
+        #investigate if request is valid. 
+        if not board.keys.contains(element_id):
+            print("this element doesn't exist")
+            return False
+            
         #if valid propegate to all nodes and call delete_element_from_store on self
-        #TODO add checks if it is valid request
         try:
             #Propegate request to all other nodes
             delete_element_from_store(element_id)
-            threaded_propagate_to_vessels(['/propagate/DELETE/{}'.format(str(element_id))])
+            threaded_propagate_to_vessels('/propagate/DELETE/{}'.format(str(element_id)))
             return True
         except Exception as e:
             print e
