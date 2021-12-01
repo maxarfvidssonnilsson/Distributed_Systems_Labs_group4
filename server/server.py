@@ -22,21 +22,28 @@ try:
     #board stores all message on the system 
     board = {0 : "Welcome to Distributed Systems Course"} 
 
-
-
- #leader methods: 
+    # ------------------------------------------------------------------------------------------------------
+    # LEADER FUNCTIONS
+    # The following three methods are only called in the leader when a node (including the leader) tries to perform any of the tree basic acctions. 
+    # ------------------------------------------------------------------------------------------------------
+    
+    # This function is called in the leader when another node or the leader itself tries to add a new entry to the board. 
+    # Currently we consider all requests valid, but we might add conditions in the future. 
     def investigate_add(entry):
         global board
-        #if valid propegate to all nodes and call add_new_element_to_store on self
-        #TODO add checks if it is valid request
         try:
-            #Propegate request to all other nodes
+            # Leader is responsible for assigning an ID to each post.
+            # Since the leader is the only one who can set ID's they should be consistant over all nodes. 
+            # We assume new posts come into the leader in the order that they were created.
             if len(board) == 0:
                     element_id = 0
             else:
-                    element_id = max(board.keys()) + 1 # you need to generate a entry number
-            add_new_element_to_store(element_id, entry)
+                    element_id = max(board.keys()) + 1 
+            add_new_element_to_store(element_id, entry) # makes sure it is added locally
+
+            #Propegate the new item to all other nodes
             threaded_propagate_to_vessels('/propagate/ADD/{}'.format(str(element_id)), {'entry': entry})
+
             return True
         except Exception as e:
             print e
@@ -53,8 +60,7 @@ try:
         
         #if valid propegate to all nodes and call modify_element_in_store on self
         try:
-            #Propegate request to all other nodes
-            modify_element_in_store(element_id, new_state)
+            modify_element_in_store(element_id, new_state) # makes sure it is added locally
             threaded_propagate_to_vessels('/propagate/MODIFY/{}'.format(str(element_id)), {'entry': new_state})
             return True
         except Exception as e:
@@ -71,14 +77,14 @@ try:
 
         #if valid propegate to all nodes and call delete_element_from_store on self
         try:
-            #Propegate request to all other nodes
-            delete_element_from_store(element_id)
+            delete_element_from_store(element_id) # makes sure it is added locally
             threaded_propagate_to_vessels('/propagate/DELETE/{}'.format(str(element_id)))
             return True
         except Exception as e:
             print e
         return False
 
+    # Used whenever a non leader process wants to do something and needs to communicate with the leader.
     def send_request_to_leader(path, payload = None, req = 'POST'):
         global my_id, leader_id, my_id
 
@@ -93,12 +99,27 @@ try:
                 print("starting election....")
                 start_election()
 
+    def start_election():
+        global my_id, vessel_list, is_leader
+        # Bully election algorithm that sends messages to larger IDs one at a time and withdraws if any respond
+        for vessel_id, vessel_ip in vessel_list.items():
+            if int(vessel_id) > my_id:
+                print("Sending election to: " + vessel_id)
+                success = contact_vessel(vessel_ip, '/election/NEW',  {'id': my_id})
+                if success:
+                    print("Lost election to: " + vessel_id)
+                    return
+                if not success:
+                    print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
+        print("I'm the king!!!")
+        is_leader = True
+        threaded_propagate_to_vessels('/election/WINNER/' + str(my_id))
+        return True
+
     # ------------------------------------------------------------------------------------------------------
     # BOARD FUNCTIONS
-    # You will probably need to modify them
     # ------------------------------------------------------------------------------------------------------
     
-    #This functions will add an new element
     def add_new_element_to_store(entry_sequence, element, is_propagated_call=False):
         global board, my_id
         success = False
@@ -135,11 +156,8 @@ try:
         return success
 
     # ------------------------------------------------------------------------------------------------------
-    # ROUTES
+    # OLD ROUTE FUNCTIONS (some are modified)
     # ------------------------------------------------------------------------------------------------------
-    # a single example (index) for get, and one for post
-    # ------------------------------------------------------------------------------------------------------
-    #No need to modify this
     @app.route('/')
     def index():
         global board, my_id
@@ -151,25 +169,24 @@ try:
         global board, my_id
         return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=sorted(board.iteritems()))
     
-    #------------------------------------------------------------------------------------------------------
-    
-    # You NEED to change the follow functions
     @app.post('/board')
     def client_add_received():
-        '''Adds a new element to the board
-        Called directly when a user is doing a POST request on /board'''
         global board, my_id, leader_ip, is_leader
         try:
             new_entry = request.forms.get('entry')
+            # Instead of simply posting the node instead sends a request to the leader. 
             if is_leader:   
-                investigate_add(new_entry)
+                # If you are leader you can call investigate directly on yourself
+                investigate_add(new_entry) 
             else:
+                # Otherwise you send a request to the leader. 
                 send_request_to_leader('/request/ADD', {'entry': new_entry})
             return True
         except Exception as e:
             print e
         return False
 
+    #this method hasn't changed, but is now only called by the leader. 
     @app.post('/board/<element_id:int>/')
     def client_action_received(element_id):
         global board, my_id
@@ -190,10 +207,6 @@ try:
                 send_request_to_leader('/request/MODIFY/' + str(element_id), {'entry': entry})
                
         
-        
-        
-
-    #With this function you handle requests from other nodes like add modify or delete
     @app.post('/propagate/<action>/<element_id>')
     def propagation_received(action, element_id):
         #get entry from http body
@@ -211,7 +224,11 @@ try:
         else:
             print("Action not valid")
 
-    
+    # ------------------------------------------------------------------------------------------------------
+    # NEW ROUTE FUNCTIONS
+    # ------------------------------------------------------------------------------------------------------
+
+    #This is called when a new election is started by another node.
     @app.post('/election/NEW')
     def new_election_received():
         from_id = request.forms.get('id')
@@ -219,6 +236,7 @@ try:
         start_election()
         return "Bully"
 
+    # This is called when another node believes it has won the election. 
     @app.post('/election/WINNER/<new_leader_id>')
     def new_leader_received(new_leader_id):
         global leader_id, leader_ip, is_leader, my_id
@@ -228,14 +246,18 @@ try:
             leader_ip = '10.1.0.{}'.format(str(leader_id))
             is_leader = False
         else:
+            # If the new leader has a lower ID than the current node it starts a new election.
+            # This is only a precaution should only be called if some message wasn't recieved. 
             start_election()
 
+    # Handles requests to add a post, sent from a lower node to leader
     @app.post('/request/ADD')
     def new_add_request_received():
         global is_leader
         if not is_leader:
+            # If a non leader node recieves a leader call a new election is needed to synchronize the nodes. 
             print("I'm not leader")
-            start_election()
+            start_election() 
             return
         print("Adding entry")
         entry = request.forms.get('entry')
@@ -246,19 +268,17 @@ try:
     def request_received(action, element_id):
         global is_leader
         if not is_leader:
+            # If a non leader node recieves a leader call a new election is needed to synchronize the nodes. 
             print("I'm not leader")
             start_election()
             return
-        #get entry from http body
         entry = request.forms.get('entry')
         print("the action is", action)
         
         if action == "MODIFY":
             investigate_modify(element_id, entry)
-            
         elif action == "DELETE":
             investigate_delete(element_id)
-            
         else:
             print("Action not valid")
 
@@ -284,16 +304,6 @@ try:
             print e
         return success
 
-    def threaded_contact_vessel(vessel_ip, path, payload=None, req='POST'):
-        thread = Thread(target=contact_vessel, args=(vessel_ip, path, payload, req))
-        thread.daemon = True
-        thread.start()
-
-    def threaded_propagate_to_vessels(path, payload = None, req = 'POST'):
-        thread = Thread(target=propagate_to_vessels, args=(path, payload, req))
-        thread.daemon = True
-        thread.start()
-
     def propagate_to_vessels(path, payload = None, req = 'POST'):
         global vessel_list, my_id
 
@@ -303,28 +313,17 @@ try:
                 if not success:
                     print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
 
-    
+    # Simply calls contact_vessel in a thread. 
+    def threaded_contact_vessel(vessel_ip, path, payload=None, req='POST'):
+        thread = Thread(target=contact_vessel, args=(vessel_ip, path, payload, req))
+        thread.daemon = True
+        thread.start()
+    # Same here but for propogate_to_vessels
+    def threaded_propagate_to_vessels(path, payload = None, req = 'POST'):
+        thread = Thread(target=propagate_to_vessels, args=(path, payload, req))
+        thread.daemon = True
+        thread.start()
 
-    # ------------------------------------------------------------------------------------------------------
-    # LEADER FUNCTIONS
-    # ------------------------------------------------------------------------------------------------------
-    def start_election():
-        global my_id, vessel_list, is_leader
-        # Send message to largest id, break if any return
-        # Could put a flag so process waits for election to finish before starting a new one, ongoing_election
-        for vessel_id, vessel_ip in vessel_list.items():
-            if int(vessel_id) > my_id:
-                print("Sending election to: " + vessel_id)
-                success = contact_vessel(vessel_ip, '/election/NEW',  {'id': my_id})
-                if success:
-                    print("Lost election to: " + vessel_id)
-                    return
-                if not success:
-                    print ("\n\nCould not contact vessel {}\n\n".format(vessel_id))
-        print("I'm the king!!!")
-        is_leader = True
-        threaded_propagate_to_vessels('/election/WINNER/' + str(my_id))
-        return True
 
         
     # ------------------------------------------------------------------------------------------------------
@@ -348,7 +347,6 @@ try:
             run(app, host=vessel_list[str(my_id)], port=port)
         except Exception as e:
             print e
-    # ------------------------------------------------------------------------------------------------------
     if __name__ == '__main__':
         main()
         
