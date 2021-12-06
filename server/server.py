@@ -28,20 +28,20 @@ try:
     # ------------------------------------------------------------------------------------------------------
     
     #This functions will add an new element
-    def add_new_element_to_store(entry_sequence, element, is_propagated_call=False):
-        global board, node_id
+    def add_new_element_to_store(element_id: int, element, element_specific_vector_clock, element_specific_time_stamp):
+        global board, my_id
         success = False
-        element_id = int(entry_sequence)
         try:
-           if entry_sequence not in board:
-                board[element_id] = element
+           if element_id not in board:
+               if
+                board[element_id] = (element, element_specific_vector_clock, element_specific_time_stamp)
                 success = True
         except Exception as e:
             print e
         return success
 
-    def modify_element_in_store(entry_sequence, modified_element, is_propagated_call = False):
-        global board, node_id
+    def modify_element_in_store(entry_sequence, modified_element):
+        global board, my_id
         success = False
         element_id = int(entry_sequence)
         try:
@@ -52,8 +52,8 @@ try:
             print e
         return success
 
-    def delete_element_from_store(entry_sequence, is_propagated_call = False):
-        global board, node_id
+    def delete_element_from_store(entry_sequence):
+        global board, my_id
         success = False
         element_id = int(entry_sequence)
         popped = board.pop(element_id, False)
@@ -71,15 +71,15 @@ try:
     #No need to modify this
     @app.route('/')
     def index():
-        global board, node_id
-        return template('server/index.tpl', board_title='Vessel {}'.format(node_id),
+        global board, my_id
+        return template('server/index.tpl', board_title='Vessel {}'.format(my_id),
                 board_dict=sorted({"0":board,}.iteritems()), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
 
     @app.get('/board')
     def get_board():
-        global board, node_id
+        global board, my_id
         print board
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(node_id), board_dict=sorted(board.iteritems()))
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=sorted(board.iteritems()))
     
     #------------------------------------------------------------------------------------------------------
     
@@ -88,14 +88,16 @@ try:
     def client_add_received():
         '''Adds a new element to the board
         Called directly when a user is doing a POST request on /board'''
-        global board, node_id
+        global board, my_id, vector_clock
         try:
             new_entry = request.forms.get('entry')
-            element_id = max(board.keys()) + 1 # you need to generate a entry number
-            add_new_element_to_store(element_id, new_entry)
+            #element_id = max(board.keys()) + 1 # you need to generate a entry number
+            element_id = hash(new_entry + str(time.time()))
+            vector_clock[str(my_id)] += 1
+            add_new_element_to_store(element_id, new_entry, vector_clock)
 
             thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/ADD/' + str(element_id), {'entry': new_entry}, 'POST'))
+                            args=('/propagate/ADD/' + str(element_id), {'entry': new_entry, 'vector_clock': vector_clock}, 'POST'))
             thread.daemon = True
             thread.start()
             return True
@@ -105,10 +107,10 @@ try:
 
     @app.post('/board/<element_id:int>/')
     def client_action_received(element_id):
-        global board, node_id
+        global board, my_id
         
         print "You receive an element"
-        print "id is ", node_id
+        print "id is ", my_id
         # Get the entry from the HTTP body
         entry = request.forms.get('entry')
         
@@ -173,10 +175,10 @@ try:
         return success
 
     def propagate_to_vessels(path, payload = None, req = 'POST'):
-        global vessel_list, node_id
+        global vessel_list, my_id
 
         for vessel_id, vessel_ip in vessel_list.items():
-            if int(vessel_id) != node_id: # don't propagate to yourself
+            if int(vessel_id) != my_id: # don't propagate to yourself
                 success = contact_vessel(vessel_ip, path, payload, req)
                 if not success:
                     print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
@@ -186,21 +188,23 @@ try:
     # EXECUTION
     # ------------------------------------------------------------------------------------------------------
     def main():
-        global vessel_list, node_id, app
+        global vessel_list, my_id, app, vector_clock
 
         port = 80
         parser = argparse.ArgumentParser(description='Your own implementation of the distributed blackboard')
         parser.add_argument('--id', nargs='?', dest='nid', default=1, type=int, help='This server ID')
         parser.add_argument('--vessels', nargs='?', dest='nbv', default=1, type=int, help='The total number of vessels present in the system')
         args = parser.parse_args()
-        node_id = args.nid
+        my_id = args.nid
         vessel_list = dict()
+        vector_clock = dict()
         # We need to write the other vessels IP, based on the knowledge of their number
         for i in range(1, args.nbv+1):
             vessel_list[str(i)] = '10.1.0.{}'.format(str(i))
+            vector_clock[str(i)] = 0
 
         try:
-            run(app, host=vessel_list[str(node_id)], port=port)
+            run(app, host=vessel_list[str(my_id)], port=port)
         except Exception as e:
             print e
     # ------------------------------------------------------------------------------------------------------
