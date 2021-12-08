@@ -155,7 +155,7 @@ try:
 
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/ADD/' + str(element_id), {'entry': new_element.message, 
-                                'vector_clock': new_element.vector_clock, 'time_stamp': new_element.time_stamp}, 'POST'))
+                                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
             thread.daemon = True
             thread.start()
             return True
@@ -182,7 +182,7 @@ try:
             delete_element_from_store(element_id, False)
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
-                                'vector_clock': new_element.vector_clock, 'time_stamp': new_element.time_stamp}, 'POST'))
+                                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
             thread.daemon = True
             thread.start()
         else:
@@ -190,7 +190,7 @@ try:
             modify_element_in_store(element_id, entry, False)
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
-                                'vector_clock': new_element.vector_clock, 'time_stamp': new_element.time_stamp}, 'POST'))
+                                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
             thread.daemon = True
             thread.start()
         
