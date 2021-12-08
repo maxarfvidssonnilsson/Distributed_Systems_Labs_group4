@@ -49,7 +49,7 @@ try:
     app = Bottle()
 
     #board stores all message on the system 
-    board = {} 
+    board = {}
 
 
 
@@ -64,7 +64,7 @@ try:
         success = False
         try:
            if element.element_id not in board:
-                board[element.element_id] = element.message
+                board[element.element_id] = element
                 success = True
         except Exception as e:
             print e
@@ -76,7 +76,7 @@ try:
         element_id = int(element.element_id)
         try:
             if element_id in board:
-                board[element_id] = element.message
+                board[element_id] = element
                 success = True
         except Exception as e:
             print e
@@ -129,13 +129,18 @@ try:
     def index():
         global board, my_id
         return template('server/index.tpl', board_title='Vessel {}'.format(my_id),
-                board_dict={"0":board,}.iteritems(), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
+                board_dict=sorted({"0":board,}.iteritems()), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
 
     @app.get('/board')
     def get_board():
         global board, my_id
-        print board
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board.iteritems())
+        print(board)
+        sorted_board = sorted(board.iteritems())
+        board_dict = {}
+        for i in range(0, len(sorted_board)):
+            board_dict.append(i, sorted_board.message)
+        
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board_dict)
     
     #------------------------------------------------------------------------------------------------------
     
