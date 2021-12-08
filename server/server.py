@@ -230,7 +230,6 @@ try:
 
     def resolve_action(new_input):
         global board_history
-        action = new_input[0]
         if (new_input == determine_newest(new_input, board_history[-1])):
             board_history.append(new_input)
             apply_action(new_input)
