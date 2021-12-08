@@ -129,13 +129,13 @@ try:
     def index():
         global board, my_id
         return template('server/index.tpl', board_title='Vessel {}'.format(my_id),
-                board_dict=sorted({"0":board,}.iteritems()), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
+                board_dict={"0":board,}.iteritems(), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
 
     @app.get('/board')
     def get_board():
         global board, my_id
         print board
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=sorted(board.iteritems()))
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board.iteritems())
     
     #------------------------------------------------------------------------------------------------------
     
@@ -243,6 +243,7 @@ try:
         sorted_history = []
         board_resolved = False
         for historic_entry in board_history:
+
             if board_resolved == True or new_input == determine_newest(historic_entry, new_input):
                 sorted_history.append(historic_entry)
             else:
