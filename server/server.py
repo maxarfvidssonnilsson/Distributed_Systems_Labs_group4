@@ -18,7 +18,7 @@ import requests
 # ------------------------------------------------------------------------------------------------------
 
 class Element:
-    def __init__(self, action: str, element_id: int, message: str, vector_clock: dict, time_stamp: int):
+    def __init__(self, action, element_id, message, vector_clock, time_stamp):
         self.action = action
         self.element_id = element_id
         self.message = message
@@ -58,7 +58,7 @@ try:
     # ------------------------------------------------------------------------------------------------------
     
     #This functions will add an new element
-    def add_new_element_to_store(element: Element):
+    def add_new_element_to_store(element):
         global board, my_id
         success = False
         try:
@@ -69,7 +69,7 @@ try:
             print e
         return success
 
-    def modify_element_in_store(element: Element):
+    def modify_element_in_store(element):
         global board, my_id
         success = False
         element_id = int(element.element_id)
@@ -216,7 +216,7 @@ try:
         resolve_action(new_input)
 
 
-    def apply_action(element: Element):
+    def apply_action(element):
         action = element.action
         if action == "ADD":
             add_new_element_to_store(element.element_id, element.message, element.vector_clock, element.time_stamp)
@@ -227,7 +227,7 @@ try:
         else:
            print("Action not valid")
 
-    def resolve_action(new_input: Element):
+    def resolve_action(new_input):
         global board_history
         action = new_input[0]
         if (new_input == determine_newest(new_input, board_history[-1])):
@@ -236,7 +236,7 @@ try:
         else:
             resolve_board(new_input)
 
-    def resolve_board(new_input: Element):
+    def resolve_board(new_input):
         global board, board_history
         sorted_history = []
         board_resolved = False
@@ -253,7 +253,7 @@ try:
         for historic_entry in board_history:
             apply_action(historic_entry)
 
-    def determine_newest(element_1: Element, element_2: Element):
+    def determine_newest(element_1, element_2):
         # First we compare based on vector clocks. 
         if compare_vector_clocks(element_1.vector_clock, element_2.vector_clock): 
             return element_1
