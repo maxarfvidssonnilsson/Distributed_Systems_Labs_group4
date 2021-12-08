@@ -73,10 +73,9 @@ try:
     def modify_element_in_store(element):
         global board, my_id
         success = False
-        element_id = int(element.element_id)
         try:
-            if element_id in board:
-                board[element_id] = element
+            if element.element_id in board:
+                board[element.element_id] = element
                 success = True
         except Exception as e:
             print e
@@ -134,16 +133,17 @@ try:
     @app.get('/board')
     def get_board():
         global board, my_id
+        print("This is the board")
         print(board)
         # sorted_board = sorted(board.iteritems())
         # board_dict = {}
         # for i in range(0, len(sorted_board)):
         #     board_dict.append(i, sorted_board.message)
 
-        board_dict = {k: v.message for k, v in sorted(board.items())}
+        # board_dict = {k: v.message for k, v in sorted(board.items())}
 
         
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board_dict)
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board.iteritems())
     
     #------------------------------------------------------------------------------------------------------
     
