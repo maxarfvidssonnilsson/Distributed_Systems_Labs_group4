@@ -208,6 +208,7 @@ try:
     def propagation_received(action, element_id):
         #get entry from http body
         message = request.forms.get('entry')
+        print("Incoming vector clock" + (request.forms.get('vector_clock')))
         input_vector_clock = json.loads(request.forms.get('vector_clock'))
         time_stamp = float(request.forms.get('time_stamp'))
         print "the action is", action
