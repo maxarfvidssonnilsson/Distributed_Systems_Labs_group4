@@ -127,23 +127,15 @@ try:
     @app.route('/')
     def index():
         global board, my_id
+        board_iter = [(v.element_id, v.message) for v in sorted(board.values())]
         return template('server/index.tpl', board_title='Vessel {}'.format(my_id),
-                board_dict=sorted({"0":board,}.iteritems()), members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
+                board_dict=board_iter, members_name_string='Erik Magnusson, Max Arfvidsson Nilsson')
 
     @app.get('/board')
     def get_board():
         global board, my_id
-        print("This is the board")
-        print(board)
-        # sorted_board = sorted(board.iteritems())
-        # board_dict = {}
-        # for i in range(0, len(sorted_board)):
-        #     board_dict.append(i, sorted_board.message)
-
-        board_dict = [(v.element_id, v.message) for v in sorted(board.values())]
-
-        
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board_dict)
+        board_iter = [(v.element_id, v.message) for v in sorted(board.values())]
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board_iter)
     
     #------------------------------------------------------------------------------------------------------
     
@@ -180,29 +172,44 @@ try:
         print "id is ", my_id
         # Get the entry from the HTTP body
         message = request.forms.get('entry')
+        delete_option = 'DELETE' if request.forms.get('delete') == 1 else 'MODIFY'
         time_stamp = time.time()
         vector_clock[str(my_id)] += 1
-        delete_option = request.forms.get('delete')
-        #0 = modify, 1 = delete
-        if delete_option == '1':
-            
-            new_element = Element('DELETE', element_id, message, copy.deepcopy(vector_clock), time_stamp)
-            board_history.append(new_element)
+        new_element = Element(delete_option, element_id, message, copy.deepcopy(vector_clock), time_stamp)
+        
+        board_history.append(new_element)
+        if delete_option == 'DELETE': 
             delete_element_from_store(new_element)
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
-                                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
-            thread.daemon = True
-            thread.start()
         else:
-            new_element = Element('MODIFY', element_id, message, copy.deepcopy(vector_clock), time_stamp)
-            board_history.append(new_element)
             modify_element_in_store(new_element)
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
-                                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
-            thread.daemon = True
-            thread.start()
+        threaded_propagate_to_vessels('/propagate/' + delete_option + '/' + str(element_id), {'entry': new_element.message, 
+                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp})
+
+
+        # #0 = modify, 1 = delete
+        # if delete_option == '1':
+            
+        #     new_element = Element('DELETE', element_id, message, copy.deepcopy(vector_clock), time_stamp)
+        #     board_history.append(new_element)
+        #     delete_element_from_store(new_element)
+        #     threaded_propagate_to_vessels('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
+        #                         'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp})
+        #     # thread = Thread(target=propagate_to_vessels,
+        #     #                 args=('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
+        #     #                     'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
+        #     # thread.daemon = True
+        #     # thread.start()
+        # else:
+        #     new_element = Element('MODIFY', element_id, message, copy.deepcopy(vector_clock), time_stamp)
+        #     board_history.append(new_element)
+        #     modify_element_in_store(new_element)
+        #     threaded_propagate_to_vessels('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
+        #                         'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp})
+        #     # thread = Thread(target=propagate_to_vessels,
+        #     #                 args=('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
+        #     #                     'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
+        #     # thread.daemon = True
+        #     # thread.start()
         
         print "the delete option is ", delete_option
         
@@ -240,7 +247,7 @@ try:
 
     def resolve_action(new_input):
         global board_history
-        if len(board_history) == 0 or (new_input == determine_newest(new_input, board_history[-1])):
+        if len(board_history) == 0 or new_input > board_history[-1]: # (new_input == determine_newest(new_input, board_history[-1])):
             board_history.append(new_input)
             apply_action(new_input)
         else:
@@ -251,8 +258,7 @@ try:
         sorted_history = []
         board_resolved = False
         for historic_entry in board_history:
-
-            if board_resolved == True or new_input == determine_newest(historic_entry, new_input):
+            if board_resolved == True or new_input > historic_entry: #  new_input == determine_newest(historic_entry, new_input):
                 sorted_history.append(historic_entry)
             else:
                 sorted_history.append(new_input)
@@ -264,25 +270,25 @@ try:
         for historic_entry in board_history:
             apply_action(historic_entry)
 
-    def determine_newest(element_1, element_2):
-        # First we compare based on vector clocks. 
-        if compare_vector_clocks(element_1.vector_clock, element_2.vector_clock): 
-            return element_1
-        elif compare_vector_clocks(element_2.vector_clock, element_1.vector_clock):
-            return element_2
-        else: 
-            # If the vector clocks are in conflict we instead compare based on timestamps.
-            if element_1.time_stamp > element_2.time_stamp:
-                return element_1
-            elif element_2.time_stamp > element_1.time_stamp:
-                return element_2
-            else:
-                # If the timestamps are equal we resolve what message to pick based on alphabetical order. 
-                # This makes sure we always have to same outcome in every node. 
-                if element_1.message < element_2.message:
-                    return element_1
-                else:
-                    return element_2
+    # def determine_newest(element_1, element_2):
+    #     # First we compare based on vector clocks. 
+    #     if compare_vector_clocks(element_1.vector_clock, element_2.vector_clock): 
+    #         return element_1
+    #     elif compare_vector_clocks(element_2.vector_clock, element_1.vector_clock):
+    #         return element_2
+    #     else: 
+    #         # If the vector clocks are in conflict we instead compare based on timestamps.
+    #         if element_1.time_stamp > element_2.time_stamp:
+    #             return element_1
+    #         elif element_2.time_stamp > element_1.time_stamp:
+    #             return element_2
+    #         else:
+    #             # If the timestamps are equal we resolve what message to pick based on alphabetical order. 
+    #             # This makes sure we always have to same outcome in every node. 
+    #             if element_1.message < element_2.message:
+    #                 return element_1
+    #             else:
+    #                 return element_2
                     
     # Returns True if clock_one is bigger or equals to clock_two for all nodes. 
     def compare_vector_clocks(clock_one, clock_two):
@@ -320,6 +326,12 @@ try:
                 success = contact_vessel(vessel_ip, path, payload, req)
                 if not success:
                     print "\n\nCould not contact vessel {}\n\n".format(vessel_id)
+    
+    def threaded_propagate_to_vessels(path, payload = None, req = 'POST'):
+        thread = Thread(target=propagate_to_vessels,
+                            args=(path, payload, req))
+        thread.daemon = True
+        thread.start()
 
         
     # ------------------------------------------------------------------------------------------------------
