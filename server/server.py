@@ -143,7 +143,7 @@ try:
         board_dict = {v.element_id: v.message for v in sorted(board.values())}
 
         
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board_dict)
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board_dict.iteritems())
     
     #------------------------------------------------------------------------------------------------------
     
