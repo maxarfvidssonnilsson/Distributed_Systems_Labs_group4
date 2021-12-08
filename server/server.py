@@ -62,7 +62,7 @@ try:
         global board, my_id
         success = False
         try:
-           if entry_sequence not in board:
+           if element.element_id not in board:
                 board[element.element_id] = element.message
                 success = True
         except Exception as e:
@@ -315,7 +315,7 @@ try:
     # EXECUTION
     # ------------------------------------------------------------------------------------------------------
     def main():
-        global vessel_list, my_id, app, vector_clock
+        global vessel_list, my_id, app, vector_clock, board_history, entry_sequence
 
         port = 80
         parser = argparse.ArgumentParser(description='Your own implementation of the distributed blackboard')
@@ -325,6 +325,7 @@ try:
         my_id = args.nid
         vessel_list = dict()
         vector_clock = dict()
+        board_history = []
         # We need to write the other vessels IP, based on the knowledge of their number
         for i in range(1, args.nbv+1):
             vessel_list[str(i)] = '10.1.0.{}'.format(str(i))
