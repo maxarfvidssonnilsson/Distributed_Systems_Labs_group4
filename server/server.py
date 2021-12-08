@@ -140,10 +140,10 @@ try:
         # for i in range(0, len(sorted_board)):
         #     board_dict.append(i, sorted_board.message)
 
-        # board_dict = {k: v.message for k, v in sorted(board.items())}
+        board_dict = {k: v.message for k, v in sorted(board.iteritems())}
 
         
-        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board.iteritems())
+        return template('server/boardcontents_template.tpl',board_title='Vessel {}'.format(my_id), board_dict=board_dict)
     
     #------------------------------------------------------------------------------------------------------
     
