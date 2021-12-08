@@ -220,11 +220,11 @@ try:
     def apply_action(element):
         action = element.action
         if action == "ADD":
-            add_new_element_to_store(element.element_id, element.message, element.vector_clock, element.time_stamp)
+            add_new_element_to_store(element)
         elif action =="MODIFY":
-            modify_element_in_store(element.element_id, element.message)
+            modify_element_in_store(element)
         elif action == "DELETE":
-            delete_element_from_store(element.element_id)
+            delete_element_from_store(element)
         else:
            print("Action not valid")
 
