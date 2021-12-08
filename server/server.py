@@ -180,7 +180,7 @@ try:
             
             new_element = Element('DELETE', element_id, message, copy.deepcopy(vector_clock), time_stamp)
             board_history.append(new_element)
-            delete_element_from_store(element_id, False)
+            delete_element_from_store(new_element)
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
                                 'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
@@ -189,7 +189,7 @@ try:
         else:
             new_element = Element('MODIFY', element_id, message, copy.deepcopy(vector_clock), time_stamp)
             board_history.append(new_element)
-            modify_element_in_store(element_id, entry, False)
+            modify_element_in_store(new_element)
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
                                 'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
