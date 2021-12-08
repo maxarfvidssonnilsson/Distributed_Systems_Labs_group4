@@ -173,12 +173,12 @@ try:
         message = request.forms.get('entry')
         time_stamp = time.time()
         vector_clock[str(my_id)] += 1
-        board_history.append(new_element)
         delete_option = request.forms.get('delete')
         #0 = modify, 1 = delete
         if delete_option == '1':
             
             new_element = Element('DELETE', element_id, message, copy.deepcopy(vector_clock), time_stamp)
+            board_history.append(new_element)
             delete_element_from_store(element_id, False)
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
@@ -187,6 +187,7 @@ try:
             thread.start()
         else:
             new_element = Element('MODIFY', element_id, message, copy.deepcopy(vector_clock), time_stamp)
+            board_history.append(new_element)
             modify_element_in_store(element_id, entry, False)
             thread = Thread(target=propagate_to_vessels,
                             args=('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
