@@ -49,7 +49,8 @@ try:
     app = Bottle()
 
     #board stores all message on the system 
-    board = {0 : "Welcome to Distributed Systems Course"} 
+    board = {} 
+
 
 
     # ------------------------------------------------------------------------------------------------------
