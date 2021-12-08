@@ -139,7 +139,6 @@ try:
     
     #------------------------------------------------------------------------------------------------------
     
-    # You NEED to change the follow functions
     @app.post('/board')
     def client_add_received():
         '''Adds a new element to the board
@@ -154,11 +153,8 @@ try:
             add_new_element_to_store(new_element)
             board_history.append(new_element)
 
-            thread = Thread(target=propagate_to_vessels,
-                            args=('/propagate/ADD/' + str(element_id), {'entry': new_element.message, 
-                                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
-            thread.daemon = True
-            thread.start()
+            threaded_propagate_to_vessels('/propagate/ADD/' + str(element_id), {'entry': new_element.message, 
+                'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp})
             return True
         except Exception as e:
             print e
@@ -176,7 +172,7 @@ try:
         time_stamp = time.time()
         vector_clock[str(my_id)] += 1
         new_element = Element(delete_option, element_id, message, copy.deepcopy(vector_clock), time_stamp)
-        
+
         board_history.append(new_element)
         if delete_option == 'DELETE': 
             delete_element_from_store(new_element)
@@ -184,32 +180,6 @@ try:
             modify_element_in_store(new_element)
         threaded_propagate_to_vessels('/propagate/' + delete_option + '/' + str(element_id), {'entry': new_element.message, 
                 'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp})
-
-
-        # #0 = modify, 1 = delete
-        # if delete_option == '1':
-            
-        #     new_element = Element('DELETE', element_id, message, copy.deepcopy(vector_clock), time_stamp)
-        #     board_history.append(new_element)
-        #     delete_element_from_store(new_element)
-        #     threaded_propagate_to_vessels('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
-        #                         'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp})
-        #     # thread = Thread(target=propagate_to_vessels,
-        #     #                 args=('/propagate/DELETE/' + str(element_id), {'entry': new_element.message, 
-        #     #                     'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
-        #     # thread.daemon = True
-        #     # thread.start()
-        # else:
-        #     new_element = Element('MODIFY', element_id, message, copy.deepcopy(vector_clock), time_stamp)
-        #     board_history.append(new_element)
-        #     modify_element_in_store(new_element)
-        #     threaded_propagate_to_vessels('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
-        #                         'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp})
-        #     # thread = Thread(target=propagate_to_vessels,
-        #     #                 args=('/propagate/MODIFY/' + str(element_id), {'entry': new_element.message, 
-        #     #                     'vector_clock': json.dumps(new_element.vector_clock), 'time_stamp': new_element.time_stamp}, 'POST'))
-        #     # thread.daemon = True
-        #     # thread.start()
         
         print "the delete option is ", delete_option
         
