@@ -168,7 +168,7 @@ try:
         print "id is ", my_id
         # Get the entry from the HTTP body
         message = request.forms.get('entry')
-        delete_option = 'DELETE' if request.forms.get('delete') == 1 else 'MODIFY'
+        delete_option = 'DELETE' if request.forms.get('delete') == '1' else 'MODIFY'
         print("Delete option: " + delete_option)
         time_stamp = time.time()
         vector_clock[str(my_id)] += 1
