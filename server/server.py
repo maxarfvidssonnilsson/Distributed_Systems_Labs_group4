@@ -30,9 +30,9 @@ class Post:
     # This comparison is used to consistelty determine the order of messages, and modification to messages. 
     def __lt__(self, other):
         # First we compare based on vector clocks. 
-        if self.compare_vector_clocks(self.vector_clock, other.vector_clock): 
+        if compare_vector_clocks(self.vector_clock, other.vector_clock): 
             return False
-        elif self.compare_vector_clocks(other.vector_clock, self.vector_clock):
+        elif compare_vector_clocks(other.vector_clock, self.vector_clock):
             return True
         else: 
             # If the vector clocks are in conflict we instead compare based on timestamps.
@@ -48,12 +48,12 @@ class Post:
                 else:
                     return True
     
-    # Returns True if clock_one is bigger or equals to clock_two for all nodes. 
-    def compare_vector_clocks(clock_one, clock_two):
-        for key in clock_one:
-            if clock_one[key] < clock_two[key]:
-                return False
-        return True
+# Returns True if clock_one is bigger or equals to clock_two for all nodes. 
+def compare_vector_clocks(clock_one, clock_two):
+    for key in clock_one:
+        if clock_one[key] < clock_two[key]:
+            return False
+    return True
 
 try:
     app = Bottle()
