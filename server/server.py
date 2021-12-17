@@ -205,6 +205,9 @@ try:
         global board_history
         # if the board is empty there is no conflict. 
         # new_post > board_history can be done becuase of the built in comparison method in the Post class. 
+        print("Resolving action ")
+        print(board_history)
+        print(board_history[-1])
         if len(board_history) == 0 or new_post > board_history[-1]: 
             board_history.append(new_post)
             apply_action(new_post)
