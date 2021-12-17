@@ -206,8 +206,6 @@ try:
         # if the board is empty there is no conflict. 
         # new_post > board_history can be done becuase of the built in comparison method in the Post class. 
         print("Resolving action ")
-        print(board_history)
-        print(board_history[-1])
         if len(board_history) == 0 or new_post > board_history[-1]: 
             board_history.append(new_post)
             apply_action(new_post)
@@ -232,7 +230,7 @@ try:
         board_history = sorted_history
 
         # board is updated by re-applying the entire board_history on an empty board
-        board = []
+        board = {}
         for historic_entry in board_history:
             apply_action(historic_entry)
 
