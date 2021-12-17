@@ -64,7 +64,7 @@ try:
         success = False
         try:
            if element.element_id not in board:
-                board[element.element_id] = element
+                board[element.element_id] = copy.deepcopy(element)
                 success = True
         except Exception as e:
             print e
@@ -75,7 +75,7 @@ try:
         success = False
         try:
             if element.element_id in board:
-                board[element.element_id] = element
+                board[element.element_id].message = element.message
                 success = True
         except Exception as e:
             print e
@@ -169,6 +169,7 @@ try:
         # Get the entry from the HTTP body
         message = request.forms.get('entry')
         delete_option = 'DELETE' if request.forms.get('delete') == 1 else 'MODIFY'
+        print("Delete option: " + delete_option)
         time_stamp = time.time()
         vector_clock[str(my_id)] += 1
         new_element = Element(delete_option, element_id, message, copy.deepcopy(vector_clock), time_stamp)
